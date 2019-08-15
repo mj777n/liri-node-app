@@ -83,9 +83,16 @@ var spotify = new Spotify({
 });
 
 spotify
-  .search({ type: 'track', query: title, limit: 5 })
+  .search({ type: 'track', query: title, limit: 10 })
   .then(function(response) {
-    console.log(response);
+  
+   for (i = 0; i < 10; i++) {
+    console.log("\n"+(i+1)+") -----------------------------");
+    console.log("Artist: "+response.tracks.items[i].artists[0].name);  
+    console.log("Song title: "+response.tracks.items[i].name);
+    console.log("Preview link to track: "+response.tracks.items[i].preview_url);
+    console.log("Album: "+response.tracks.items[i].album.name);   
+  } // end for Loop
   })
   .catch(function(err) {
     console.log(err);
