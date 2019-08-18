@@ -3,41 +3,38 @@
   // PROBLEM: Moment() keeps coming up "undefined"
   // src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"
  
+
+// Program purpose:
 // Takes in the command line arguments 2("command") & 3("title")
-// "2" =>
+// "command" choices are
   //     * concert-this
   //     * spotify-this-song
   //     * movie-this
   //     * do-what-it-says
-// "3" =>
+// "title" is in quotes
 //       * title (of Artist, Song or Movie)
 
-// ** Attempts to use the "dotenv" NPM example
-// const db = require('db')
-// db.connect({
-//   ID: process.SPOTIFY_ID,
-//   SECRET: process.env.SPOTIFY_SECRET,
-// })  
+// require packages needed
+// config for "dotenv" pacakage
+require("dotenv").config();
+var moment  =       require("moment");
 
-require("dotenv").config(); 
-var keys = require("./keys.js");
-var fs = require("fs");
+var keys =    require("./keys.js");
+var fs =      require("fs");
 var Spotify = require("node-spotify-api");
-var keys = require("./keys.js");
 var spotify = new Spotify(keys.spotify);
 
 var command = process.argv[2];
 var title = process.argv[3];
 
-// Main switch block for command provided in argument 2
+// Main switch block for command provided in process.argument 2
 switch (command) {
   case "concert-this":
     // search "BandsInTown API" using AXIOS
     concertThis();
     break;  
   case "spotify-this-song":
-    // search "Spotify-Songs" using npm Spotify package
-
+    // search "Spotify-Songs" using npm Spotify API package
     spotifySongs();
     break;  
   case "movie-this":
@@ -45,32 +42,50 @@ switch (command) {
     movieThis();
     break;  
   case "do-what-it-says":
-    // use fs package to readFile ".txt" file for Spotify API search
+    // use fs package to readFile "random.txt" file containing
+    //   my personal credentials for Spotify API search
+    // using "title" of songs stored in .txt file
+    // and command-type stored (in this case we use "spotify-this-song")
+    //  for testing, title used is "I Like it That Way"
     doWhatItSays();
     break;
 }
-// ************** BEGIN FUNCTIONS ***********************
+// ************** BEGIN FUNCTIONS **********************
+// *****************************************************
+function spotifySongs() {
+  // search Spotify API using "my API credentials" stored in .env file
+  // since .env file is not pushed to gitHub, my keys are kept private
+  // using "require" keys.js to store key names for Spotify API call
+spotify
+  .search({ type: 'track', query: title, limit: 10 })
+  .then(function(response) { 
+    for (i = 0; i < 10; i++) {
+      console.log("\n"+(i+1)+") --------------------------------------");
+      console.log("Artist               : "+response.tracks.items[i].artists[0].name);  
+      console.log("Song title           : "+response.tracks.items[i].name);
+      console.log("Preview link to track: "+response.tracks.items[i].preview_url);
+      console.log("Album                : "+response.tracks.items[i].album.name);   
+    } // end for Loop
+  })  // end .then call-back function
+  .catch(function(err) {
+    console.log(err);
+  })
+}  // end of function spotifySongs()
+// **********************************************************
 function doWhatItSays() {
     // Use fs package to read "random.txt" file
     // for purposed of assignement "random.txt" contains:
     // command "spotify-this-song" , "I want It That Way"
+    // *******************************************************
+      // search Spotify API using "my API credentials" stored in .env file
+    // since .env file is not pushed to gitHub, my keys are kept private
+  // using "require" keys.js to store key names for Spotify API call
   fs.readFile("random.txt", "utf8", function(error, data) {
     if (error) {
       return console.log(error);    
     }
       // Split the data from "random.txt" by commas (to make it more usable)
     var dataArr = data.split(",");  // this works but below does not
-    // console.log("var keys = "+keys.spotify.id);
-    // console.log("var keys = "+keys.spotify.secret);
-
-    // var spotify = new Spotify({
-      // id: "2eb938cc022044c9b7671bf61eaff967",
-      // secret: "f6b25c8747af4cfea971cbf503bfeef3"
-      // id: ID,
-      // secret: SECRET  
-    // });
-    // console.log("Line 78 /Data Array = "+dataArr[1]);
-
     spotify.search({ type: 'track', query: dataArr[1], limit: 10 })
       .then(function(response) {
         // Loop through API results; console log each match of request
@@ -88,7 +103,7 @@ function doWhatItSays() {
       })
   });  // end fs.readFile
 } // end function doWhatItSays()
-// ***************************************************
+// **************************************************************
 function concertThis() {
   // Include the axios npm package
   var axios = require("axios");
@@ -100,39 +115,43 @@ function concertThis() {
   }
   var queryUrl = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp";
     // This line is just to help us debug against the actual URL.
+    // Axios get to receive the API data - then store it in var "results"
   axios.get(queryUrl).then(
     function(response) {
       var results = response.data;
+      // keep track of total matches (ie. concerts)
+      // store in var "hits" for "FYI" stat displayed for user
       var hits = 0;
       var time1 = 0;
       var time2 = 0;
       console.log("\n"+"These are the next shows nearest to you");
       console.log("---------------------------------------------------------");
+      // loops thru results and take out only the concerts in Florida
       for (i = 0; i < results.length; i++) {
         if (results[i].venue.region === "FL") {
           hits  ++;
-            // moment() is "not defined" on run
-            // ***** Under Construction *******
-          venueTime = results[i].datetime;        
-            // console.log("var venueTime = "+venueTime);
-            // console.log(moment(venueTime).format("L"));
+            // grab the Venue Time from API search results and store var
+            // use "moment.js" node package to convert to readable format
+          var venueTime = results[i].datetime;
+          var time = moment(venueTime).format("L");
+            // console.log" info we are searching for (hard coded in this assignment)
           console.log("Band Name    : "+artist);
           console.log("Venue        : "+results[i].venue.name);
           console.log("City/State   : "+results[i].venue.city+", "+results[i].venue.region);
-          console.log("Date and Time: "+results[i].datetime); 
+          console.log("Date and Time: "+time); 
           console.log("\n"+"--------------------------------------------------");
         } else {
         }      
       }  // end for Loop
+        // check if there were "no matches" (ie. no concerts in the US)
       if (hits === 0){
         console.log("Sorry, there were no shows found near you (In your State)");
         console.log("---------------------------------------------------------")
-      }  
+      } // display for "FYI" purposes only - since we're only showing concerts in Florida
+        // may add "input" for search by State only or City
         console.log("Number of shows in Florida = "+hits);  
-        console.log("Number of shows in the US  = "+i);  
-      
+        console.log("Number of shows in the US  = "+i);      
     })  // end .then call back function (response)     
-
   .catch(function(error) {
     if (error.response) {
       // The request was made and the server responded with a status code
@@ -145,16 +164,13 @@ function concertThis() {
       console.log(error.response.headers);
     } else if (error.request) {
       // The request was made but no response was received
-      // `error.request` is an object that comes back with details pertaining to the error that occurred.
+      // `error.request` is an object that comes back with on the error
       console.log(error.request);
-      console.log("IN THE ERROR LOG");
     } else {
       // Something happened in setting up the request that triggered an Error
       console.log("Error", error.message);
-    }
-    console.log(error.config);
-    console.log("IN THE 2nd ERROR LOG");
-  }); 
+    }  // end error function block
+  }); // end callback .catch
 }  // end function concertThis()
 // **************************************
 function movieThis(){
@@ -183,9 +199,8 @@ function movieThis(){
     if (title === "Mr. Nobody") {
       console.log('\n'+'*** Since you did not enter a movie, may I suggest: "Mr. Nobody" ***');
       console.log("It comes recommomended by our instructor, Graydon");
-    }
+    }  // I added this statment for "FYI" and as a credit for Graydon's "personal pics"
     })  // end .then call back function (response)
-
   .catch(function(error) {
     if (error.response) {
       // The request was made and the server responded with a status code
@@ -207,31 +222,7 @@ function movieThis(){
     console.log(error.config);
   })  // end call back .catch function
 }  // end function movieThis
-// **************************************************
-function spotifySongs() {
-  var Spotify = require('node-spotify-api');  
-  var spotify = new Spotify({
-  id: "2eb938cc022044c9b7671bf61eaff967",
-  secret: "f6b25c8747af4cfea971cbf503bfeef3"
-});
 
-spotify
-  .search({ type: 'track', query: title, limit: 10 })
-  .then(function(response) {
-  
-  for (i = 0; i < 10; i++) {
-    console.log("\n"+(i+1)+") --------------------------------------");
-    console.log("Artist               : "+response.tracks.items[i].artists[0].name);  
-    console.log("Song title           : "+response.tracks.items[i].name);
-    console.log("Preview link to track: "+response.tracks.items[i].preview_url);
-    console.log("Album                : "+response.tracks.items[i].album.name);   
-  } // end for Loop
-  })  // end .then call-back function
-
-  .catch(function(err) {
-    console.log(err);
-  })
-}  // end of function spotifySongs()
 // At the top of the `liri.js` file
 // add code to read 
 // and set any environment variables 
