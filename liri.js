@@ -1,15 +1,31 @@
 
   // -- Link to Moment.js should go here --
-  src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"
-    
-// Takes in all of the command line arguments
-// var inputString = process.argv;
-  // Capture the command line argument into array var:
-  //  using "command" options:
-  //    "concert-this"
-  //    "spotify-this-song"
-  //    "movie-this"
-  //    "do-what-it-says"
+  // PROBLEM: Moment() keeps coming up "undefined"
+  // src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"
+ 
+// Takes in the command line arguments 2("command") & 3("title")
+// "2" =>
+  //     * concert-this
+  //     * spotify-this-song
+  //     * movie-this
+  //     * do-what-it-says
+// "3" =>
+//       * title (of Artist, Song or Movie)
+
+// ** Attempts to use the "dotenv" NPM example
+// const db = require('db')
+// db.connect({
+//   ID: process.SPOTIFY_ID,
+//   SECRET: process.env.SPOTIFY_SECRET,
+// })  
+
+require("dotenv").config(); 
+var keys = require("./keys.js");
+var fs = require("fs");
+var Spotify = require("node-spotify-api");
+var keys = require("./keys.js");
+var spotify = new Spotify(keys.spotify);
+
 var command = process.argv[2];
 var title = process.argv[3];
 
@@ -35,41 +51,44 @@ switch (command) {
 }
 // ************** BEGIN FUNCTIONS ***********************
 function doWhatItSays() {
-  var fs = require("fs");
+    // Use fs package to read "random.txt" file
+    // for purposed of assignement "random.txt" contains:
+    // command "spotify-this-song" , "I want It That Way"
   fs.readFile("random.txt", "utf8", function(error, data) {
-      // If the code experiences any errors it will log the error to the console.
     if (error) {
-      return console.log(error);
+      return console.log(error);    
     }
-      // Split the data by commas (to make it more readable)
-    var dataArr = data.split(",");
-    var Spotify = require('node-spotify-api');
- 
-    var spotify = new Spotify({
-      id: "2eb938cc022044c9b7671bf61eaff967",
-      secret: "f6b25c8747af4cfea971cbf503bfeef3"
-    });
-    
-    spotify
-      .search({ type: 'track', query: dataArr[1], limit: 10 })
+      // Split the data from "random.txt" by commas (to make it more usable)
+    var dataArr = data.split(",");  // this works but below does not
+    // console.log("var keys = "+keys.spotify.id);
+    // console.log("var keys = "+keys.spotify.secret);
+
+    // var spotify = new Spotify({
+      // id: "2eb938cc022044c9b7671bf61eaff967",
+      // secret: "f6b25c8747af4cfea971cbf503bfeef3"
+      // id: ID,
+      // secret: SECRET  
+    // });
+    // console.log("Line 78 /Data Array = "+dataArr[1]);
+
+    spotify.search({ type: 'track', query: dataArr[1], limit: 10 })
       .then(function(response) {
-      
+        // Loop through API results; console log each match of request
       for (i = 0; i < 10; i++) {
-        console.log("\n"+(i+1)+") -----------------------------");
-        console.log("Artist: "+response.tracks.items[i].artists[0].name);  
-        console.log("Song title: "+response.tracks.items[i].name);
+        console.log("\n"+(i+1)+") ----------------------------------");
+        console.log("Artist               : "+response.tracks.items[i].artists[0].name);  
+        console.log("Song title           : "+response.tracks.items[i].name);
         console.log("Preview link to track: "+response.tracks.items[i].preview_url);
-        console.log("Album: "+response.tracks.items[i].album.name);   
+        console.log("Album                : "+response.tracks.items[i].album.name);   
       } // end for Loop
-      console.log("\n"+'This is 10 instances of the song "I Want It THat Way"' );
-      })  // end .then call-back function
-    
+      console.log("\n"+'< This is 10 instances of the song: "I Want It That Way">' );
+      })  // end .then call-back function  
       .catch(function(err) {
         console.log(err);
       })
   });  // end fs.readFile
 } // end function doWhatItSays()
-
+// ***************************************************
 function concertThis() {
   // Include the axios npm package
   var axios = require("axios");
@@ -137,7 +156,7 @@ function concertThis() {
     console.log("IN THE 2nd ERROR LOG");
   }); 
 }  // end function concertThis()
-
+// **************************************
 function movieThis(){
     // Include the axios npm package
   var axios = require("axios");
@@ -161,6 +180,10 @@ function movieThis(){
       console.log("Actors                : " + response.data.Actors);        
       console.log("Plot                  : " + response.data.Plot);
       console.log("------------------------------------------") 
+    if (title === "Mr. Nobody") {
+      console.log('\n'+'*** Since you did not enter a movie, may I suggest: "Mr. Nobody" ***');
+      console.log("It comes recommomended by our instructor, Graydon");
+    }
     })  // end .then call back function (response)
 
   .catch(function(error) {
@@ -186,9 +209,8 @@ function movieThis(){
 }  // end function movieThis
 // **************************************************
 function spotifySongs() {
-    var Spotify = require('node-spotify-api');
- 
-var spotify = new Spotify({
+  var Spotify = require('node-spotify-api');  
+  var spotify = new Spotify({
   id: "2eb938cc022044c9b7671bf61eaff967",
   secret: "f6b25c8747af4cfea971cbf503bfeef3"
 });
@@ -198,11 +220,11 @@ spotify
   .then(function(response) {
   
   for (i = 0; i < 10; i++) {
-    console.log("\n"+(i+1)+") -----------------------------");
-    console.log("Artist: "+response.tracks.items[i].artists[0].name);  
-    console.log("Song title: "+response.tracks.items[i].name);
+    console.log("\n"+(i+1)+") --------------------------------------");
+    console.log("Artist               : "+response.tracks.items[i].artists[0].name);  
+    console.log("Song title           : "+response.tracks.items[i].name);
     console.log("Preview link to track: "+response.tracks.items[i].preview_url);
-    console.log("Album: "+response.tracks.items[i].album.name);   
+    console.log("Album                : "+response.tracks.items[i].album.name);   
   } // end for Loop
   })  // end .then call-back function
 
@@ -210,13 +232,10 @@ spotify
     console.log(err);
   })
 }  // end of function spotifySongs()
-
-
-
 // At the top of the `liri.js` file
 // add code to read 
 // and set any environment variables 
-// with the dotenv package:
+// with the dotenv package
 
 // require("dotenv").config(); +++++++++++++++++
 
@@ -229,8 +248,3 @@ spotify
 // You should then be able to access your keys information like so
 // var spotify = new Spotify(keys.spotify); +++++++++++++++++++
 
-// Make it so liri.js can take in one of the following commands:
-// * `concert-this`
-// * `spotify-this-song`
-// * `movie-this`
-// * `do-what-it-says`
